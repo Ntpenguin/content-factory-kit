@@ -1,0 +1,4 @@
+# Python packages the factory imports (python -m factory.* and checks.*). Also needed: ffmpeg and ffprobe on PATH,
+# and Node with `npm ci` in remotion/ for the video and statics lanes.
+faster-whisper==1.2.1
+pillow==12.1.1

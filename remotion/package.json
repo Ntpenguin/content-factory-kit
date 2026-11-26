@@ -1,0 +1,17 @@
+{
+  "name": "content-factory-render",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Content factory render lane (statics and videos). Versions pinned to match ~/Projects/ads/fastfixwork-ads, whose lock file this folder copies.",
+  "dependencies": {
+    "@remotion/cli": "4.0.475",
+    "@remotion/google-fonts": "4.0.475",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.475"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "typescript": "5.8.2"
+  }
+}

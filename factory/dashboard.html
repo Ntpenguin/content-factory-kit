@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Content factory</title>
+<style>
+:root{--floor:#16221F;--panel:#1E2E2A;--well:#0F1816;--rule:#35504A;--ink:#EDF1E7;--dim:#A3B5AA;--yellow:#F4C430;--go:#7BD88F;--stop:#FF7B6B;
+ --body:"Bahnschrift","DIN Alternate","Avenir Next",system-ui,sans-serif;--head:"Bahnschrift","DIN Condensed","Avenir Next Condensed",system-ui,sans-serif}
+*{box-sizing:border-box}
+html{color-scheme:dark;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--floor);color:var(--ink);font:16px/1.5 var(--body)}
+h1,h2,h3,h4,h5{font-family:var(--head);font-stretch:75%;font-weight:700;line-height:1.1;margin:0;letter-spacing:.01em}
+h1{font-size:30px} h2{font-size:28px;margin:0 0 12px} h3{font-size:21px;margin:0 0 8px} h4,h5{font-size:18px;margin:14px 0 6px}
+p{margin:0 0 10px;max-width:74ch} small,.dim{color:var(--dim)} small{font-size:14px}
+a{color:var(--yellow);text-underline-offset:3px;overflow-wrap:anywhere} a:hover{color:var(--ink)}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+code{font-family:inherit;background:var(--well);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+pre{background:var(--well);border:1px solid var(--rule);padding:12px;overflow:auto;font:13px/1.45 Consolas,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 10px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+
+header{position:sticky;top:0;z-index:5;background:var(--floor);border-bottom:2px solid var(--rule)}
+.top{display:flex;align-items:baseline;gap:14px;padding:12px 18px 6px;max-width:1280px;margin:auto}
+.top small{margin-left:auto;text-align:right}
+#jobchip{color:var(--floor);background:var(--yellow);padding:2px 10px;font-weight:600;text-decoration:none;white-space:nowrap}
+nav{display:flex;gap:2px;padding:0 12px;max-width:1280px;margin:auto;overflow-x:auto}
+nav a{padding:9px 12px 8px;color:var(--dim);text-decoration:none;font-family:var(--head);font-stretch:75%;font-size:20px;font-weight:600;border-bottom:4px solid transparent;white-space:nowrap}
+nav a[aria-current]{color:var(--ink);border-color:var(--yellow)}
+main{max-width:1280px;margin:auto;padding:20px 18px 80px}
+section{margin:0 0 26px}
+.panel{background:var(--panel);border:1px solid var(--rule);padding:16px 18px}
+.wait{position:relative;padding-top:26px}
+.wait::before{content:"";position:absolute;inset:0 0 auto;height:10px;background:repeating-linear-gradient(-45deg,var(--yellow) 0 10px,var(--floor) 10px 20px)}
+.cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:start}
+.cols>div>section:last-child{margin-bottom:0}
+
+/* the line: eight stations, a lamp lit when the station's output is on disk */
+.line{list-style:none;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));margin:0;padding:0;position:relative}
+.line::before{content:"";position:absolute;left:6.25%;right:6.25%;top:8px;height:2px;background:var(--rule)}
+.line li{display:grid;justify-items:center;gap:5px;text-align:center;font-size:13px;line-height:1.15;color:var(--dim);position:relative}
+.line i{width:18px;height:18px;border-radius:50%;border:2px solid var(--rule);background:var(--floor)}
+.line .on{color:var(--ink)} .line .on i{background:var(--yellow);border-color:var(--yellow);box-shadow:0 0 0 4px rgba(244,196,48,.18)}
+.row{display:grid;grid-template-columns:210px minmax(0,1fr) 190px;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--rule);color:inherit;text-decoration:none}
+.row:hover .who b{color:var(--yellow)} .row .who b{display:block;font-size:18px} .row .tally{text-align:right;color:var(--dim);font-size:14px}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.chip{display:inline-block;padding:6px 12px;border:1px solid var(--rule);color:var(--ink);text-decoration:none;background:var(--panel);font-size:15px}
+.chip[aria-current]{background:var(--yellow);border-color:var(--yellow);color:var(--floor);font-weight:600}
+.chip small{color:inherit;opacity:.8}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.piece{background:var(--panel);border:1px solid var(--rule);display:flex;flex-direction:column}
+.piece.approve{border-color:var(--go)} .piece.reject{border-color:var(--stop)}
+.piece img,.piece video{display:block;width:100%;height:auto;background:var(--well)}
+.media.none{padding:40px 16px;background:var(--well);color:var(--dim);text-align:center}
+.piece .txt{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.piece p{margin:0} .piece .hook{font-size:17px}
+.ok{color:var(--go)} .bad{color:var(--stop)} .warn{color:var(--yellow)}
+ul.bad{margin:0;padding-left:18px}
+details summary{cursor:pointer;color:var(--dim)} details[open] summary{margin-bottom:6px}
+.decide{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+button{font:600 16px var(--body);padding:10px 12px;border:2px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer;min-height:44px}
+button:hover:not(:disabled){border-color:var(--ink)} button:disabled{opacity:.45;cursor:not-allowed}
+button[data-say=approve][aria-pressed=true]{background:var(--go);border-color:var(--go);color:var(--floor)}
+button[data-say=reject][aria-pressed=true]{background:var(--stop);border-color:var(--stop);color:var(--floor)}
+button.go{background:var(--yellow);border-color:var(--yellow);color:var(--floor)} button.armed{background:var(--ink);border-color:var(--ink);color:var(--floor)}
+textarea,select{font:16px var(--body);background:var(--well);color:var(--ink);border:1px solid var(--rule);padding:8px;width:100%}
+textarea{min-height:64px;resize:vertical}
+.pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 16px} .pick label{display:grid;gap:4px;color:var(--dim);font-size:14px}
+.act{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--rule)}
+.act p{margin:0 0 2px} .act h3{margin-bottom:4px}
+.pick.two{grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 0 6px;max-width:460px}
+#console pre{max-height:420px;min-height:80px}
+.brand .logo{display:flex;align-items:center;justify-content:center;padding:26px;min-height:120px;border:1px solid var(--rule)} .brand .logo img{max-width:min(320px,80%);max-height:90px}
+.sw{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0} .sw span{width:44px;height:44px;border:1px solid var(--rule)}
+.tag{display:inline-block;padding:0 7px;border:1px solid var(--rule);font-size:13px;white-space:nowrap} .tag.yes{border-color:var(--go);color:var(--go)} .tag.no{border-color:var(--yellow);color:var(--yellow)}
+.tw{overflow-x:auto;margin:0 0 12px} table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--rule)} th{color:var(--dim);font-weight:600}
+.prose ul{list-style:none;margin:0 0 10px;padding:0;max-width:80ch} .prose li{display:grid;grid-template-columns:1.9em minmax(0,1fr);margin:0 0 9px}
+.mk{color:var(--yellow);font-weight:600} .mk.dot::before{content:"";display:inline-block;width:7px;height:7px;background:var(--rule);vertical-align:middle}
+.mk.box::before{content:"";display:inline-block;width:14px;height:14px;border:2px solid var(--rule);vertical-align:-2px} .mk.box.done::before{background:var(--go);border-color:var(--go)}
+hr{border:0;border-top:1px solid var(--rule);margin:14px 0}
+.next{display:grid;gap:10px;margin:0 0 18px}
+.next a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:14px 16px;background:var(--panel);border:1px solid var(--rule);border-left:6px solid var(--yellow);color:var(--ink);text-decoration:none}
+.next a:hover{border-color:var(--yellow)} .next b{font-size:19px} .next small{grid-column:1} .next i{grid-row:1/3;grid-column:2;font-style:normal;color:var(--yellow);font-size:24px}
+.how{background:var(--well);border-left:4px solid var(--yellow);padding:10px 14px;margin:0 0 14px}
+details.more{margin:14px 0} details.more>summary{padding:10px 0;font-size:16px}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--stop);color:var(--floor);padding:10px 16px;font-weight:600;max-width:92vw;z-index:9}
+@media (max-width:800px){
+ .cols,.pick,.act{grid-template-columns:minmax(0,1fr)} .row{grid-template-columns:minmax(0,1fr);gap:10px} .row .tally{text-align:left}
+ .line{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:12px} .line::before{display:none}
+ main{padding:16px 12px 80px} .top{padding:10px 12px 4px} nav{padding:0 4px} nav a{padding:9px 9px 8px;font-size:19px} h2{font-size:25px}
+}
+</style>
+</head>
+<body>
+<header>
+ <div class="top"><h1>Content factory</h1><a id="jobchip" href="#run" hidden></a><small id="stamp"></small></div>
+ <nav aria-label="Sections"><a href="#today" data-tab="today">Home</a><a href="#batches" data-tab="batches">Review</a><a href="#brands" data-tab="brands">Brands</a><a href="#run" data-tab="run">Make</a><a href="#library" data-tab="library">Docs</a></nav>
+</header>
+<main id="view"><p>Loading the factory's state.</p></main>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+'use strict';
+const view = document.getElementById('view'), $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const enc = p => p.split('/').map(encodeURIComponent).join('/'), url = p => '/' + enc(p);
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`;
+let S = null, raw = '', job = {id: 0}, armed = '', sel = {brand: '', batch: '', clip: '', customer: '', count: '10'}, known = new Map(), lastHash = null, toastTimer = 0;
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 6000); }
+async function post(path, body) {
+  const r = await fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `the server answered ${r.status}`);
+  return j;
+}
+const route = () => (location.hash.slice(1) || 'today').split('/').map(s => { try { return decodeURIComponent(s); } catch { return s; } });
+const docLink = (path, label) => `<a class="chip" href="#library/${enc(path)}">${esc(label || path.split('/').pop())}</a>`;
+/* "2026-11-16-batch1" reads as "Batch 1, Nov 16" */
+const nice = s => { const m = s.match(/^(\d{4})-(\d\d)-(\d\d)-?(.*)$/), r = (m ? m[4] : s).replace(/[-_]+/g, ' ').replace(/([a-z])(\d)/i, '$1 $2').trim(), t = r ? r[0].toUpperCase() + r.slice(1) : 'Batch';
+  return m ? `${t}, ${new Date(+m[1], m[2] - 1, +m[3]).toLocaleDateString([], {month: 'short', day: 'numeric'})}` : t; };
+const brandName = slug => (S.brands.find(b => b.slug === slug) || {name: slug}).name;
+const tally = b => ({n: b.pieces.length, pass: b.pieces.filter(p => !p.problems.length).length, yes: b.pieces.filter(p => p.decision === 'approve').length,
+  no: b.pieces.filter(p => p.decision === 'reject').length, open: b.pieces.filter(p => !p.decision).length});
+
+/* small markdown: headings, lists, check boxes, tables, code, bold, links. ponytail: no nested quotes, images or pipes inside table cells. */
+const INL = /`([^`]+)`|\*\*([^*]+)\*\*|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"'`]*[^\s<>"'`.,;:!?)\]])/g;
+function inline(t) {
+  let out = '', i = 0;
+  for (const m of t.matchAll(INL)) {
+    out += esc(t.slice(i, m.index)); i = m.index + m[0].length;
+    if (m[1] != null) out += known.has(m[1]) ? `<a href="${known.get(m[1])}"${known.get(m[1])[0] === '/' ? ' target="_blank" rel="noopener"' : ''}>${esc(m[1])}</a>` : `<code>${esc(m[1])}</code>`;
+    else if (m[2] != null) out += `<b>${inline(m[2])}</b>`;
+    else out += `<a href="${esc(m[4] || m[5])}" target="_blank" rel="noopener noreferrer">${esc(m[3] || m[5])}</a>`;
+  }
+  return out + esc(t.slice(i));
+}
+const table = rows => !rows.length ? '' : `<div class="tw"><table><thead><tr>${rows[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.slice(1).map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+function md(text) {
+  const L = text.replace(/\r/g, '').split('\n'); let out = '', para = [], items = null, i = 0, m;
+  const flush = () => {
+    if (para.length) { out += `<p>${para.map(inline).join(' ')}</p>`; para = []; }
+    if (items) { out += `<ul>${items.map(it => `<li style="margin-left:${it.d * 1.3}em">${it.mk}<span>${inline(it.t)}</span></li>`).join('')}</ul>`; items = null; }
+  };
+  while (i < L.length) {
+    const l = L[i];
+    if (/^\s*```/.test(l)) { flush(); const c = []; i++; while (i < L.length && !/^\s*```/.test(L[i])) c.push(L[i++]); i++; out += `<pre>${esc(c.join('\n'))}</pre>`; continue; }
+    if (/^\s*\|/.test(l)) { flush(); const rows = []; while (i < L.length && /^\s*\|/.test(L[i])) rows.push(L[i++]);
+      out += table(rows.filter(r => !/^[\s|:-]+$/.test(r)).map(r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => inline(c.trim())))); continue; }
+    if (m = l.match(/^(#{1,5})\s+(.*)/)) { flush(); const n = Math.min(m[1].length + 1, 5); out += `<h${n}>${inline(m[2])}</h${n}>`; }
+    else if (/^\s*-{3,}\s*$/.test(l)) { flush(); out += '<hr>'; }
+    else if (m = l.match(/^(\s*)(?:[-*]|(\d+)\.)\s+(?:\[([ xX])\]\s+)?(.*)/)) {
+      if (para.length) flush(); items = items || [];
+      const mk = m[3] != null ? `<span class="mk box${m[3] === ' ' ? '' : ' done'}"><b class="vh">${m[3] === ' ' ? 'to do' : 'done'}</b></span>` : m[2] ? `<span class="mk">${m[2]}.</span>` : '<span class="mk dot"></span>';
+      items.push({d: Math.floor(m[1].length / 2), mk, t: m[4]});
+    }
+    else if (!l.trim()) flush();
+    else if (items && /^\s/.test(l)) items[items.length - 1].t += ' ' + l.trim();
+    else { if (items) flush(); para.push(l.trim()); }
+    i++;
+  }
+  flush(); return out;
+}
+function csv(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) { const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; } else if (c !== '\r') cell += c; }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return table(rows.map(r => r.map(esc)));
+}
+
+const strip = b => `<ol class="line">${b.stations.map(s => `<li class="${s.done ? 'on' : ''}"><i></i><span>${esc(s.name)}<b class="vh">${s.done ? ', done' : ', not yet'}</b></span></li>`).join('')}</ol>`;
+const part = (title, body) => body ? `<section class="panel prose"><h3>${esc(title)}</h3>${md(body)}</section>` : '';
+
+function today() {
+  const st = S.status, waitKey = Object.keys(st).find(k => k.startsWith('Waits on Nate')), all = S.batches.flatMap(b => b.pieces);
+  const facts = S.brands.flatMap(b => b.facts || []), conf = facts.filter(f => f.status === 'confirmed by Nate').length;
+  const said = {yes: all.filter(p => p.decision === 'approve').length, no: all.filter(p => p.decision === 'reject').length};
+  const summary = `<section class="panel"><h3>Where things stand</h3>
+    <p>${plural(S.brands.length, 'brand')}, ${plural(S.batches.length, 'batch', 'batches')}, ${plural(all.length, 'piece')}: ${all.filter(p => p.kind === 'static').length} static ads and ${all.filter(p => p.kind === 'video').length} videos.</p>
+    <p>${all.filter(p => !p.problems.length).length} of ${all.length} pass the checks. ${said.yes} approved, ${said.no} rejected, ${all.length - said.yes - said.no} not judged yet.</p>
+    <p class="${conf < facts.length ? 'warn' : 'ok'}">${conf} of ${facts.length} facts confirmed by Nate. Every ad is a draft until its brand's facts are confirmed.</p>
+    <p class="dim">Nothing is posted, sent or uploaded from this page.</p></section>`;
+  const line = `<section><h2>All batches</h2><p class="dim">Each dot is a step, from brief to results. A lit dot means that step is done.</p>${S.batches.map(b => { const t = tally(b);
+    return `<a class="row" href="#batches/${enc(b.brand)}/${enc(b.batch)}"><span class="who"><b>${esc(brandName(b.brand))}</b><small>${esc(nice(b.batch))}</small></span>${b.error ? `<span class="bad">${esc(b.error)}</span>` : strip(b)}<span class="tally">${plural(t.n, 'ad')}, ${t.open} to judge</span></a>`; }).join('')}</section>`;
+  const next = S.batches.filter(b => tally(b).open).map(b => `<a href="#batches/${enc(b.brand)}/${enc(b.batch)}"><b>Judge ${plural(tally(b).open, 'ad')}</b><small>${esc(brandName(b.brand))}, ${esc(nice(b.batch))}: watch, then Approve or Reject</small><i aria-hidden="true">›</i></a>`)
+    .concat(S.brands.filter(b => b.facts && b.facts.some(f => f.status !== 'confirmed by Nate')).map(b => `<a href="#brands/${enc(b.slug)}"><b>Check ${plural(b.facts.filter(f => f.status !== 'confirmed by Nate').length, 'fact')} for ${esc(b.name)}</b><small>Ads stay drafts until you confirm them. Tell Jarvis which are right.</small><i aria-hidden="true">›</i></a>`));
+  return `<section><h2>Do next</h2>${next.length ? `<div class="next">${next.join('')}</div>` : '<p class="ok">Nothing to judge or confirm right now.</p>'}</section>
+    <div class="cols"><div>
+    <section class="panel wait prose"><h2>Questions waiting on you</h2>${waitKey ? md(st[waitKey]) : '<p>STATUS.md has no list of things waiting on Nate.</p>'}
+      <p class="dim">Answer these in the Jarvis session.</p></section>
+    </div><div>${summary}${part('Higgsfield credits', st['Higgsfield credits'])}</div></div>
+    ${line}
+    <details class="panel more"><summary>Behind the scenes: what the last session did, servers, files outside this folder</summary>
+      ${part('Now', st['Now'])}${part('Servers', st['Servers'])}${part('Outside this folder', st['Outside this folder'])}</details>`;
+}
+
+function card(b, p) {
+  const sizes = Object.keys(p.files), first = ['9x16', '4x5', '1x1'].find(k => p.files[k]) || sizes[0];
+  const ar = /^\d+x\d+$/.test(first || '') ? first.replace('x', '/') : '9/16';
+  const media = !first ? '<div class="media none">Not rendered on this laptop. Run the lane on the Run tab to make it.</div>'
+    : p.kind === 'video' ? `<video controls preload="metadata" playsinline style="aspect-ratio:${ar}" src="${url(p.files[first])}#t=0.5"></video>`
+    : `<a href="${url(p.files[first])}" target="_blank" rel="noopener"><img loading="lazy" alt="Static ad ${esc(p.id)}" style="aspect-ratio:${ar}" src="${url(p.files[first])}"></a>`;
+  const others = sizes.filter(k => k !== first).map(k => `<a href="${url(p.files[k])}" target="_blank" rel="noopener">${esc(k.replace('x', ' by '))}</a>`).join(', ');
+  const tags = [p.kind === 'video' ? 'Video' : 'Static ad', p.seconds ? `${p.seconds} s` : '', p.type, p.customer].filter(Boolean).map(esc).join(', ');
+  return `<article class="piece ${esc(p.decision)}" data-piece="${esc(p.id)}">${media}<div class="txt">
+    <h3>${esc(p.id)}</h3><small>${tags}${others ? `. Other sizes: ${others}` : ''}${p.missing && first ? `. ${plural(p.missing, 'size')} not rendered` : ''}</small>
+    ${p.hook ? `<p class="hook">${esc(p.hook)}</p>` : ''}
+    ${p.problems.length ? `<ul class="bad">${p.problems.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="ok">Passes the checks</p>'}
+    ${p.notes.length ? `<details><summary>${plural(p.notes.length, 'note')} from the checks</summary>${p.notes.map(n => `<p>${esc(n)}</p>`).join('')}</details>` : ''}
+    ${p.kind !== 'video' || !first ? '' : p.look ? `<details><summary>Look note, ${esc(p.look.at)}</summary>${esc(p.look.note)}</details>` : '<p class="warn">Nobody has looked at this video since it was rendered.</p>'}
+    <div class="decide"><button data-say="approve" aria-pressed="${p.decision === 'approve'}">Approve</button><button data-say="reject" aria-pressed="${p.decision === 'reject'}">Reject</button></div>
+    <textarea aria-label="Comment on ${esc(p.id)}" placeholder="Comment for the next version" maxlength="2000">${esc(p.comment)}</textarea>
+    <small><span class="saved"></span> ${b.review ? `<a href="${url(b.review)}#${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Open in the review page</a>` : ''}</small>
+  </div></article>`;
+}
+function counts(b) {
+  const t = tally(b), v = b.pieces.filter(p => p.kind === 'video').length;
+  return `<p><b>${t.open} to judge, ${t.yes} approved, ${t.no} rejected.</b> <span class="dim">${plural(t.n, 'ad')} (${plural(t.n - v, 'image')}, ${plural(v, 'video')}); ${t.pass === t.n ? 'all pass' : `${t.pass} pass`} the automatic checks.</span></p>`;
+}
+const reads = r => r ? `<p class="dim">Copy: ${plural(r.lines, 'line')}, ${r.flagged} flagged by the reader, ${r.unread} not read yet, ${r.bare} citing no fact.</p>` : '';
+function batches(rest) {
+  const withPieces = S.batches.find(b => b.pieces.length) || S.batches[0];
+  const b = S.batches.find(x => x.brand === rest[0] && x.batch === rest[1]) || withPieces;
+  if (!b) return '<h2>Batches</h2><p>No batch folder yet. A batch is a folder in runs/, under its brand.</p>';
+  sel.brand = b.brand; sel.batch = b.batch;
+  const chips = S.batches.map(x => `<a class="chip" href="#batches/${enc(x.brand)}/${enc(x.batch)}"${x === b ? ' aria-current="page"' : ''}>${esc(brandName(x.brand))}: ${esc(nice(x.batch))} <small>(${tally(x).open} to judge)</small></a>`).join('');
+  const todo = b.stations.filter(s => !s.done), brand = S.brands.find(x => x.slug === b.brand), facts = brand && brand.facts || [];
+  const open = facts.filter(f => f.status !== 'confirmed by Nate').length;
+  return `<p class="dim">Pick a batch:</p><div class="chips">${chips}</div><section data-batch><h2>${esc(brandName(b.brand))}: ${esc(nice(b.batch))}</h2>
+    ${b.error ? `<p class="bad">This batch could not be read: ${esc(b.error)}</p>` : ''}
+    <p class="how">Watch each ad, then tap <b>Approve</b> or <b>Reject</b>. Type a comment if it needs a change. Everything saves on its own. Tap a button again to undo.</p>
+    ${open ? `<p class="warn">These are drafts: ${open} of ${facts.length} facts for ${esc(brandName(b.brand))} still need your OK.</p>` : ''}
+    <div id="counts">${counts(b)}</div>
+    <details class="more"><summary>Details: steps done, copy checks, files</summary>
+      <div class="panel">${strip(b)}</div>
+      <p class="dim" style="margin-top:10px">${todo.length ? 'Not there yet: ' + todo.map(s => `${esc(s.name)} (needs ${esc(s.needs)})`).join(', ') + '.' : 'Every step is done.'}${b.checked ? ` Checked ${esc(b.checked)}.` : ''}</p>${reads(b.reads)}
+      <div class="chips">${b.review ? `<a class="chip" href="${url(b.review)}" target="_blank" rel="noopener">Review page</a>` : ''}${b.docs.map(d => docLink(d)).join('')}</div></details>
+    ${b.pieces.length ? `<div class="grid">${b.pieces.map(p => card(b, p)).join('')}</div>` : '<p>No pieces yet. Write statics.json or videos.json in the batch folder, then run the lane on the Run tab.</p>'}</section>`;
+}
+
+function brands(rest) {
+  return S.brands.map(b => {
+    if (b.error) return `<section class="brand"><h2>${esc(b.name)}</h2><p class="bad">This brand folder does not load: ${esc(b.error)}</p><div class="chips">${b.docs.map(d => docLink(d)).join('')}</div></section>`;
+    const col = Object.entries(b.colors).filter(([, v]) => /^#[0-9a-f]{3,8}$/i.test(v)), bg = (col.find(([k]) => k === 'bg') || [0, '#000'])[1];
+    const conf = b.facts.filter(f => f.status === 'confirmed by Nate').length;
+    return `<section class="brand"><h2>${esc(b.name)}</h2><div class="cols"><div>
+      <div class="logo" style="background:${bg}"><img alt="${esc(b.name)} logo" src="${url(b.logo)}"></div>
+      <div class="sw">${col.map(([k, v]) => `<span style="background:${v}" title="${esc(k)} ${v}"></span>`).join('')}</div>
+      <p><b>${esc(b.tagline)}</b></p><p><a href="https://${esc(b.site)}" target="_blank" rel="noopener noreferrer">${esc(b.site)}</a></p>
+      <div class="chips">${b.docs.map(d => docLink(d)).join('')}</div>
+    </div><div class="prose">
+      <h4>Look</h4><p>${esc(b.look)}</p>
+      <h4>Voice</h4><ul>${b.voice.map(v => `<li><span class="mk dot"></span><span>${esc(v)}</span></li>`).join('')}</ul>
+      <h4>Calls to action</h4><ul>${b.ctas.map(c => `<li><span class="mk">${esc(c.id)}</span><span>${esc(c.text)} <small>${esc(c.url)}</small></span></li>`).join('')}</ul>
+      ${b.callouts.length ? `<h4>Who the ads call out</h4><p>${b.callouts.map(esc).join(', ')}</p>` : ''}
+    </div></div>
+    <details class="panel"${rest[0] === b.slug ? ' open data-focus' : ''}><summary><b class="${conf < b.facts.length ? 'warn' : 'ok'}">${conf} of ${b.facts.length} facts confirmed by Nate</b>, and ${plural(b.never, 'thing')} the copy must never say. Open the list.</summary>
+      ${table([['Fact', 'Status', 'What it says', 'Where it comes from']].concat(b.facts.map(f => [esc(f.id), `<span class="tag ${f.status === 'confirmed by Nate' ? 'yes' : 'no'}">${esc(f.status)}</span>`, esc(f.text), esc(f.source)])))}
+      <p class="dim">Only you confirm a fact: tell Jarvis which are right or wrong. This page shows them and does not change them.</p></details></section>`;
+  }).join('') || '<h2>Brands</h2><p>No brand folder yet.</p>';
+}
+
+const opts = (list, cur, label) => list.map(x => `<option value="${esc(x)}"${x === cur ? ' selected' : ''}>${esc(label ? label(x) : x)}</option>`).join('');
+const customers = () => ((S.brands.find(b => b.slug === sel.brand) || {}).callouts || []).concat('all');   // who a brand's scripts can be written for
+function run() {
+  const names = [...new Set(S.batches.map(b => b.brand).concat(S.brands.map(b => b.slug)))];
+  if (!names.includes(sel.brand)) sel.brand = names[0] || '';
+  const mine = S.batches.filter(b => b.brand === sel.brand);
+  if (!mine.some(b => b.batch === sel.batch)) sel.batch = mine[0] ? mine[0].batch : '';
+  const clips = (mine.find(b => b.batch === sel.batch) || {clips: []}).clips;
+  if (!clips.includes(sel.clip)) sel.clip = clips[0] || '';
+  if (!customers().includes(sel.customer)) sel.customer = customers()[0];
+  if (!(S.counts || []).includes(sel.count)) sel.count = (S.counts || [])[0] || '';
+  return `<h2>Make ads</h2><p class="how">Pick the brand and batch, then tap a button twice to start it. One runs at a time; its progress shows at the bottom. Nothing here spends credits, posts or uploads; writing scripts uses your Claude plan.</p>
+    ${S.quiet ? '<p class="warn">Runs are off from 4:35 to 5:10 PM, Sunday to Thursday, to leave the laptop to the trading bot.</p>' : ''}
+    <div class="pick"><label>Brand<select id="rb">${opts(names, sel.brand, brandName)}</select></label>
+      <label>Batch<select id="rt">${opts(mine.map(b => b.batch), sel.batch) || '<option value="">No batch</option>'}</select></label>
+      <label>Phone clip<select id="rc">${opts(clips, sel.clip) || '<option value="">None in this batch</option>'}</select></label></div>
+    <div id="actions"></div><details class="more"><summary>More tools: checks, lists, scoreboard</summary><div id="more"></div></details><section id="console" class="panel" style="margin-top:22px"></section>`;
+}
+const EVERYDAY = ['write', 'statics', 'video', 'footage', 'review'];   // the Make tab shows these first; the rest sit under More tools
+function paintActions() {
+  const box = $('#actions'); if (!box) return;
+  const row = a => {
+    const pick = a.needs !== 'write' ? '' : `<div class="pick two"><label>Who it's for<select id="rw">${opts(customers(), sel.customer, x => x === 'all' ? 'All of them' : x)}</select></label>
+      <label>How many hooks<select id="rn">${opts(S.counts || [], sel.count)}</select></label></div>`;
+    const on = a.needs === 'brand' || a.needs === 'write' ? brandName(sel.brand) : a.needs ? `${brandName(sel.brand)}, ${sel.batch || 'no batch'}` + (a.needs === 'clip' ? `, ${sel.clip || 'no clip in media/raw'}` : '') : 'the whole factory';
+    const cant = job.running ? 'Wait for the current run' : S.quiet ? 'Off until 5:10 PM' : a.needs === 'write' && !(S.brands.some(b => b.slug === sel.brand) && sel.count) ? 'Pick a brand' : (a.needs === 'brand' && !sel.brand) || ((a.needs === 'batch' || a.needs === 'clip') && !sel.batch) ? 'Pick a batch' : a.needs === 'clip' && !sel.clip ? 'No clip to cut' : '';
+    return `<div class="act"><div><h3>${esc(a.label)}</h3><p>${esc(a.about)}</p>${pick}<small>${a.needs === 'write' ? 'For' : 'On'} ${esc(on)}</small></div>
+      <button data-run="${esc(a.id)}" class="${armed === a.id && !cant ? 'armed' : 'go'}"${cant ? ' disabled' : ''}>${cant || (armed === a.id ? 'Tap again to start' : 'Run')}</button></div>`; };
+  box.innerHTML = S.actions.filter(a => EVERYDAY.includes(a.id)).map(row).join('');
+  $('#more').innerHTML = S.actions.filter(a => !EVERYDAY.includes(a.id)).map(row).join('');
+}
+function paintJob() {
+  const chip = $('#jobchip'); chip.hidden = !job.running; chip.textContent = job.running ? `Running: ${job.label}` : '';
+  const box = $('#console'); if (!box) return;
+  if (!job.id) { box.innerHTML = '<h3>Output</h3><p class="dim">Nothing has run since the dashboard started.</p>'; return; }
+  const head = job.running ? 'Running' : job.stopped ? 'Stopped' : job.code === 0 ? 'Finished' : 'Failed';
+  const pre = $('pre', box), stick = !pre || pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 30;
+  box.innerHTML = `<h3 class="${job.running || job.stopped ? 'warn' : job.code === 0 ? 'ok' : 'bad'}">${head}: ${esc(job.label)}</h3><p class="dim">Started ${esc(job.started)}${job.ended ? `, ended ${esc(job.ended)}` : ''}</p>
+    <pre tabindex="0">${esc(job.out)}</pre>${job.running ? '<button data-stop>Stop this run</button>' : ''}`;
+  if (stick) { const p = $('pre', box); p.scrollTop = p.scrollHeight; }
+}
+
+function library(rest) {
+  const path = rest.join('/'), group = (name, docs) => docs.length ? `<section><h3>${esc(name)}</h3><div class="chips">${docs.map(d => docLink(d)).join('')}</div></section>` : '';
+  return (path ? `<section><p><a href="#library">All documents</a></p><h2>${esc(path)}</h2><div id="doc" class="panel prose" data-path="${esc(path)}"><p>Opening.</p></div></section>` : '<h2>Library</h2>') +
+    S.library.map(g => group(g.group, g.docs)).join('') + S.brands.map(b => group(`${b.name}, brand folder`, b.docs)).join('') +
+    S.batches.map(b => group(`${brandName(b.brand)}, ${b.batch}`, b.docs)).join('');
+}
+async function loadDoc() {
+  const box = $('#doc'); if (!box) return;
+  const path = box.dataset.path, r = await fetch(url(path)).catch(() => null);
+  if ($('#doc') !== box) return;
+  if (!r || !r.ok) { box.innerHTML = '<p class="bad">This document could not be opened. It may have been moved or renamed.</p>'; return; }
+  const text = await r.text();
+  box.innerHTML = /\.md$/i.test(path) ? md(text) : /\.csv$/i.test(path) ? csv(text) : `<pre>${esc(text)}</pre>`;
+}
+
+function index() {
+  known = new Map();
+  const add = p => known.set(p, /\.html$/.test(p) ? url(p) : '#library/' + enc(p));
+  S.library.forEach(g => g.docs.forEach(add)); S.brands.forEach(b => b.docs.forEach(add));
+  S.batches.forEach(b => { b.docs.forEach(add); if (b.review) add(b.review); });
+}
+function render() {
+  if (!S) return;
+  const [tab, ...rest] = route(), pages = {today, batches, brands, run, library};
+  document.querySelectorAll('nav a').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  view.innerHTML = (pages[tab] || today)(rest);
+  paintActions(); paintJob(); loadDoc();
+  if (lastHash !== location.hash) { if (lastHash !== null) scrollTo(0, 0); lastHash = location.hash; const f = $('[data-focus]'); if (f) f.scrollIntoView(); }
+}
+const busy = () => (document.activeElement && document.activeElement.tagName === 'TEXTAREA') || [...document.querySelectorAll('video')].some(v => !v.paused && !v.ended);
+async function loadState(quietly) {
+  try {
+    const r = await fetch('/api/state'), text = await r.text();
+    if (!r.ok) throw new Error(text);
+    $('#stamp').textContent = 'Read ' + new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+    if (text === raw) return;
+    if (quietly || (S && busy())) { if (quietly) { raw = text; S = JSON.parse(text); index(); } return; }   // a poll never interrupts typing or a playing video
+    raw = text; S = JSON.parse(text); index(); render();
+  } catch (err) { $('#stamp').textContent = 'The dashboard is not answering. Start it again with dashboard.cmd.'; }
+}
+async function pollJob() {
+  try { const was = job.running; job = await (await fetch('/api/job')).json(); paintJob(); if (was !== job.running) { paintActions(); if (was) loadState(); } } catch (err) {}
+  if (job.running) setTimeout(pollJob, 1500);
+}
+
+const pieceOf = el => { const card = el.closest('.piece'), b = S.batches.find(x => x.brand === sel.brand && x.batch === sel.batch); return {card, b, p: b.pieces.find(x => x.id === card.dataset.piece)}; };
+async function decide(card, b, p, body) {
+  const note = $('.saved', card);
+  try {
+    const saved = await post('/api/decision', {brand: b.brand, batch: b.batch, piece: p.id, ...body});
+    p.decision = saved.decision; p.comment = saved.comment;
+    card.className = 'piece ' + p.decision;
+    card.querySelectorAll('[data-say]').forEach(x => x.setAttribute('aria-pressed', x.dataset.say === p.decision));
+    if (card.isConnected) { $('#counts').innerHTML = counts(b); note.textContent = 'Saved.'; }   // the save counts even when the page has moved on
+    loadState(true);
+  } catch (err) { note.textContent = ''; toast('Not saved: ' + err.message); }
+}
+const timers = new Map();
+document.addEventListener('click', async ev => {
+  const say = ev.target.closest('[data-say]'), go = ev.target.closest('[data-run]');
+  if (say) { const {card, b, p} = pieceOf(say); decide(card, b, p, {decision: p.decision === say.dataset.say ? '' : say.dataset.say}); }
+  else if (go) {
+    if (armed !== go.dataset.run) { armed = go.dataset.run; paintActions(); const mine = armed; setTimeout(() => { if (armed === mine) { armed = ''; paintActions(); } }, 5000); return; }
+    armed = '';
+    try { job = await post('/api/run', {action: go.dataset.run, brand: sel.brand, batch: sel.batch, clip: sel.clip, customer: sel.customer, count: sel.count}); paintActions(); paintJob(); setTimeout(pollJob, 600); $('#console').scrollIntoView({block: 'nearest'}); }
+    catch (err) { paintActions(); toast('Not started: ' + err.message); }
+  }
+  else if (ev.target.closest('[data-stop]')) { try { await post('/api/stop', {}); } catch (err) { toast('Not stopped: ' + err.message); } }
+});
+document.addEventListener('input', ev => {
+  if (!ev.target.matches('.piece textarea')) return;
+  const {card, b, p} = pieceOf(ev.target), text = ev.target;
+  $('.saved', card).textContent = 'Typing.'; clearTimeout(timers.get(p.id));
+  timers.set(p.id, setTimeout(() => decide(card, b, p, {comment: text.value}), 800));
+});
+document.addEventListener('change', ev => {
+  if (ev.target.id === 'rb') { sel.brand = ev.target.value; sel.batch = ''; } else if (ev.target.id === 'rt') sel.batch = ev.target.value; else if (ev.target.id === 'rc') sel.clip = ev.target.value;
+  else if (ev.target.id === 'rw') sel.customer = ev.target.value; else if (ev.target.id === 'rn') sel.count = ev.target.value; else return;
+  armed = ''; render();
+});
+addEventListener('hashchange', render);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { loadState(); pollJob(); } });
+setInterval(() => { if (!document.hidden) { loadState(); if (!job.running) pollJob(); } }, 20000);
+loadState().then(pollJob);
+</script>
+</body>
+</html>

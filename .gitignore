@@ -1,0 +1,23 @@
+.env*
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+out/
+renders/
+downloads/
+tmp/
+.cache/
+*.log
+
+# rendered pieces: rebuilt by the lanes (python -m factory.statics ...)
+runs/*/*/pieces/
+runs/*/*/*/pieces/
+# Filmed clips are big; the stand-in test clip is the one exception
+runs/*/*/media/raw/*
+runs/*/*/media/clips/*-cut.mp4
+!runs/builtwithbaron/footage-standin/media/raw/*
+!runs/builtwithbaron/footage-standin/media/clips/*-cut.mp4
+
+# The FASTEDITOR sound pack (676 MB, no licence file): kept local; picked sounds are copied into sounds/
+sounds/fasteditor/
